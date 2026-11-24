@@ -16,6 +16,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: camilo-labanino/sentrimak@main
+      - uses: astral-sh/setup-uv@v6
+      - name: Descargar Sentrimak
+        # El repositorio de Sentrimak es privado: se descarga con un token guardado como secreto.
+        run: git clone --depth 1 "https://x-access-token:${{ secrets.SENTRIMAK_TOKEN }}@github.com/camilo-labanino/sentrimak.git" "$RUNNER_TEMP/sentrimak"
+      - name: Generar informe SARIF
+        run: uv run --project "$RUNNER_TEMP/sentrimak/backend" sentrimak scan . --format sarif -o sentrimak.sarif -q
+      - name: Escanear con Sentrimak (falla si hay P1)
+        run: uv run --project "$RUNNER_TEMP/sentrimak/backend" sentrimak scan . --fail-on P1 --limit 15
+      - name: Publicar en la pestaña Security
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
         with:
-          fail-on: P1
+          sarif_file: sentrimak.sarif
+          category: sentrimak
