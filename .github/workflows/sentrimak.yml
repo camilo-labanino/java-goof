@@ -1,0 +1,21 @@
+name: Sentrimak
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:        # botón «Run workflow» para lanzarlo a mano
+  schedule:
+    - cron: "0 6 * * *"     # también a diario: aparecen CVE nuevas aunque el código no cambie
+
+permissions:
+  contents: read
+  security-events: write    # necesario para publicar el SARIF en la pestaña Security
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: camilo-labanino/sentrimak@main
+        with:
+          fail-on: P1
